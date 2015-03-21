@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://www.netbeans.org/ns/project/1">
-    <type>org.netbeans.modules.j2ee.ejbjarproject</type>
+    <type>org.netbeans.modules.j2ee.earproject</type>
     <configuration>
-        <buildExtensions xmlns="http://www.netbeans.org/ns/ant-build-extender/1"/>
-        <data xmlns="http://www.netbeans.org/ns/j2ee-ejbjarproject/3">
-            <name>SxServer-ejb</name>
+        <data xmlns="http://www.netbeans.org/ns/j2ee-earproject/2">
+            <name>SxServer</name>
             <minimum-ant-version>1.6</minimum-ant-version>
             <included-library dirs="200">file.reference.iText-2.0.7.jar</included-library>
             <included-library dirs="200">reference.SveFakturaJAXBDeclarations.jar</included-library>
@@ -20,12 +19,12 @@
         </data>
         <references xmlns="http://www.netbeans.org/ns/ant-project-references/1">
             <reference>
-                <foreign-project>SveFakturaJAXBDeclarations</foreign-project>
-                <artifact-type>jar</artifact-type>
+                <foreign-project>SxServer-ejb</foreign-project>
+                <artifact-type>j2ee_ear_archive</artifact-type>
                 <script>build.xml</script>
-                <target>jar</target>
-                <clean-target>clean</clean-target>
-                <id>jar</id>
+                <target>dist-ear</target>
+                <clean-target>clean-ear</clean-target>
+                <id>dist-ear</id>
             </reference>
             <reference>
                 <foreign-project>SveFakturaJAXBDeclarations-1</foreign-project>
@@ -39,9 +38,17 @@
                 <foreign-project>SxLibrary</foreign-project>
                 <artifact-type>jar</artifact-type>
                 <script>build.xml</script>
-                <target>jar</target>
-                <clean-target>clean</clean-target>
-                <id>jar</id>
+                <target>dist-ear</target>
+                <clean-target>clean-ear</clean-target>
+                <id>dist-ear</id>
+            </reference>
+            <reference>
+                <foreign-project>WebAdm</foreign-project>
+                <artifact-type>j2ee_ear_archive</artifact-type>
+                <script>build.xml</script>
+                <target>dist-ear</target>
+                <clean-target>clean-ear</clean-target>
+                <id>dist-ear</id>
             </reference>
         </references>
     </configuration>
