@@ -784,12 +784,18 @@ exists or setup the property manually. For example like this:
         <ant antfile="${project.SveFakturaJAXBDeclarations}/build.xml" inheritall="false" target="jar">
             <property name="deploy.on.save" value="false"/>
         </ant>
+        <ant antfile="${project.SveFakturaJAXBDeclarations-1}/build.xml" inheritall="false" target="jar">
+            <property name="deploy.on.save" value="false"/>
+        </ant>
         <ant antfile="${project.SxLibrary}/build.xml" inheritall="false" target="jar">
             <property name="deploy.on.save" value="false"/>
         </ant>
     </target>
     <target depends="init" if="dist.ear.dir" name="-deps-ear-jar" unless="no.deps">
         <ant antfile="${project.SveFakturaJAXBDeclarations}/build.xml" inheritall="false" target="jar">
+            <property name="deploy.on.save" value="false"/>
+        </ant>
+        <ant antfile="${project.SveFakturaJAXBDeclarations-1}/build.xml" inheritall="false" target="jar">
             <property name="deploy.on.save" value="false"/>
         </ant>
         <ant antfile="${project.SxLibrary}/build.xml" inheritall="false" target="jar">
@@ -811,18 +817,21 @@ exists or setup the property manually. For example like this:
         <copyfiles files="${reference.SveFakturaJAXBDeclarations.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${reference.SxLibrary.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${libs.javaee-api-6.0.classpath}" todir="${build.classes.dir}"/>
+        <copyfiles files="${reference.SveFakturaJAXBDeclarations-1.jar}" todir="${build.classes.dir}"/>
     </target>
     <target if="is.server.weblogic" name="-library-inclusion-in-archive-weblogic">
         <basename file="${file.reference.iText-2.0.7.jar}" property="manifest.file.reference.iText-2.0.7.jar"/>
         <basename file="${reference.SveFakturaJAXBDeclarations.jar}" property="manifest.reference.SveFakturaJAXBDeclarations.jar"/>
         <basename file="${reference.SxLibrary.jar}" property="manifest.reference.SxLibrary.jar"/>
         <basename file="${libs.javaee-api-6.0.classpath}" property="manifest.libs.javaee-api-6.0.classpath"/>
+        <basename file="${reference.SveFakturaJAXBDeclarations-1.jar}" property="manifest.reference.SveFakturaJAXBDeclarations-1.jar"/>
         <manifest file="${build.ear.classes.dir}/META-INF/MANIFEST.MF" mode="update">
-            <attribute name="Extension-List" value="jar-1 jar-2 jar-3 jar-4 "/>
+            <attribute name="Extension-List" value="jar-1 jar-2 jar-3 jar-4 jar-5 "/>
             <attribute name="jar-1-Extension-Name" value="${manifest.file.reference.iText-2.0.7.jar}"/>
             <attribute name="jar-2-Extension-Name" value="${manifest.reference.SveFakturaJAXBDeclarations.jar}"/>
             <attribute name="jar-3-Extension-Name" value="${manifest.reference.SxLibrary.jar}"/>
             <attribute name="jar-4-Extension-Name" value="${manifest.libs.javaee-api-6.0.classpath}"/>
+            <attribute name="jar-5-Extension-Name" value="${manifest.reference.SveFakturaJAXBDeclarations-1.jar}"/>
         </manifest>
     </target>
     <target depends="compile" name="library-inclusion-in-manifest">
@@ -830,6 +839,7 @@ exists or setup the property manually. For example like this:
         <copyfiles files="${reference.SveFakturaJAXBDeclarations.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${reference.SxLibrary.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${libs.javaee-api-6.0.classpath}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${reference.SveFakturaJAXBDeclarations-1.jar}" todir="${dist.ear.dir}/lib"/>
         <manifest file="${build.ear.classes.dir}/META-INF/MANIFEST.MF" mode="update"/>
     </target>
     <target name="-copy-meta-inf">
@@ -1214,6 +1224,7 @@ exists or setup the property manually. For example like this:
             -->
     <target depends="init" name="deps-clean" unless="no.deps">
         <ant antfile="${project.SveFakturaJAXBDeclarations}/build.xml" inheritall="false" target="clean"/>
+        <ant antfile="${project.SveFakturaJAXBDeclarations-1}/build.xml" inheritall="false" target="clean"/>
         <ant antfile="${project.SxLibrary}/build.xml" inheritall="false" target="clean"/>
     </target>
     <target depends="init" name="-do-clean">
