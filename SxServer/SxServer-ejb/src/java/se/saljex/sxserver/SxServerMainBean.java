@@ -730,5 +730,34 @@ public class SxServerMainBean implements SxServerMainLocal, SxServerMainRemote {
 		return prepareOrderHandler(anvandare, copyFromTableOrder1, orderRader).persistOffert();
 	}
 
+@RolesAllowed("admin")
+	@Override
+	public ArrayList<Integer> saveHemsidaOrder(int kontaktId, String kundnr, String kontaktNamn, short lagerNr, String marke) throws KreditSparrException, SxInfoException{
+		if (true)throw new UnsupportedOperationException("Inte implementerad");
+		//Spara angiven användares varukorg som en riktig order
+		//Returnerar en lista över de 'riktiga' order somskapas (om flera som t.ex. vid direktleverans)
+		//Returnerar null om ingen order registrerats (mest troligtom varukorgen var tom)
+		SimpleOrderHandler sord = new SimpleOrderHandler(em, kundnr, kontaktNamn, lagerNr, "00", marke);
+		int antalRader=0;
+/*		Iterator i = em.createNamedQuery("TableVarukorg.findByKontaktidVK").setParameter("kontaktid", kontaktId).getResultList().iterator();
+		while (i.hasNext()) {
+			antalRader++;
+			TableVarukorg v = (TableVarukorg)i.next();
+			sord.addRow(v.getTableVarukorgPK().getArtnr(),v.getAntal());
+		}
+		*/
+		
+		
+		if (antalRader==0) return null;	//Vi har inga rader i varukorgen. returnera null. Bra att göra retur redan här så vi inte går vidare och försöker spara
+		if (sord.getOrdreg().size() < 0) return null;
+		ArrayList<Integer> orderList = sord.saveAsOrder();
+		if (orderList.size()>0) {
+			em.createNamedQuery("TableVarukorg.deleteByKontaktidVK").setParameter("kontaktid", kontaktId).executeUpdate();
+			return orderList;
+		} else return null;
+	}
+
+
+	
 
 }
