@@ -2509,3 +2509,21 @@ LEFT JOIN nettopri n ON n.lista::text = k.nettolst::text AND n.artnr::text = a.n
 create table butikautologin (uuid varchar not null,  kontaktid integer, primary key (uuid), expiredate date not null default current_date)
 alter table artklase add column autosortvikt integer not null default 0;
 alter table artklase add column autoantalorderrader integer not null default 0;
+
+
+create table hemsidasidor (sidid varchar not null, status varchar, rubrik varchar, html varchar, primary key (sidid));  
+
+--Script för att sätta sökvikt i artklase
+create temp table t on commit drop as 	(
+    select akl.klasid as klasid, count(*) as cnt from artklaselank akl
+    join faktura2 f2 on f2.artnr=akl.artnr
+    join faktura1 f1 on f1.faktnr=f2.faktnr
+    where  f1.datum > current_date-300 and f2.lev>0 
+    group by akl.klasid
+)  ;
+update artklase ak set autoantalorderrader = coalesce ( ( select cnt from t where t.klasid=ak.klasid ),0);
+create temp table t2 on commit drop as 	( select max(autoantalorderrader) as mx from artklase);
+update artklase set autosortvikt = 5000/(select max(mx) from t2)*autoantalorderrader;
+--Slut script
+
+alter table artklase add column rekommenderadprio integer not null default 0;
