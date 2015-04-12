@@ -2527,3 +2527,7 @@ update artklase set autosortvikt = 5000/(select max(mx) from t2)*autoantalorderr
 --Slut script
 
 alter table artklase add column rekommenderadprio integer not null default 0;
+alter table artklase add column auto_sokord varchar;
+alter table artklase add column auto_sokartnr varchar;
+alter table artklase add column auto_sokrefnr varchar;
+alter table artklase add column auto_bildartnr varchar;
