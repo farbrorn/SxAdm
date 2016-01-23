@@ -2532,3 +2532,8 @@ alter table artklase add column auto_sokartnr varchar;
 alter table artklase add column auto_sokrefnr varchar;
 alter table artklase add column auto_bildartnr varchar;
 alter table artklase add column auto_samkopta_klasar varchar;
+
+
+create table eankoder (artnr varchar, ean varchar, enheterperean numeric(12,6), primary key (artnr, ean) );
+alter table kundlogin add column defaultlagernr integer not null default 0;
+alter table kundlogin add column defaultinkmoms boolean not null default false;
