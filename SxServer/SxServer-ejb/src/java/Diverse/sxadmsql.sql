@@ -2537,5 +2537,6 @@ alter table artklase add column auto_samkopta_klasar varchar;
 create table eankoder (artnr varchar, ean varchar, enheterperean numeric(12,6), primary key (artnr, ean) );
 alter table kundlogin add column defaultlagernr integer not null default 0;
 alter table kundlogin add column defaultinkmoms boolean not null default false;
+alter table kundlogin add column defaultfraktsatt varchar;
 
 create table hemsidalog (ts timestamp default now(), kontaktid integer, servlet varchar, id varchar);
