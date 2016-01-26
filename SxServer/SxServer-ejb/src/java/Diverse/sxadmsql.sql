@@ -2538,4 +2538,4 @@ create table eankoder (artnr varchar, ean varchar, enheterperean numeric(12,6), 
 alter table kundlogin add column defaultlagernr integer not null default 0;
 alter table kundlogin add column defaultinkmoms boolean not null default false;
 
-create table hemsidalog (ts timestamp default now(), servlet varchar, id varchar)
+create table hemsidalog (ts timestamp default now(), kontaktid integer, servlet varchar, id varchar);
