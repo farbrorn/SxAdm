@@ -2540,3 +2540,8 @@ alter table kundlogin add column defaultinkmoms boolean not null default false;
 alter table kundlogin add column defaultfraktsatt varchar;
 
 create table hemsidalog (ts timestamp default now(), kontaktid integer, servlet varchar, id varchar);
+
+//2017-02-21
+alter table artgrp add column visaundergrupper boolean not null default false;
+alter table artgrp add column htmlhead varchar;
+alter table artgrp add column htmlfoot varchar;
