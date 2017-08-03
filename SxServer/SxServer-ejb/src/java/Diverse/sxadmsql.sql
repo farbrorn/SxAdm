@@ -2545,3 +2545,27 @@ create table hemsidalog (ts timestamp default now(), kontaktid integer, servlet 
 alter table artgrp add column visaundergrupper boolean not null default false;
 alter table artgrp add column htmlhead varchar;
 alter table artgrp add column htmlfoot varchar;
+
+//2017-08-03
+create or replace view v_saljstatdata as (
+select f1.datum as datum, year(f1.datum) as ar, month(f1.datum) as man, extract (QUARTER from f1.datum) as kvartal, case when month(f1.datum) < 7 then 1 else 2 end as halvar,
+year(f1.datum) || '-' || trim(to_char(month(f1.datum),'09')) as arman,
+year(f1.datum) || '-' || extract (QUARTER from f1.datum) as arkvartal,
+year(f1.datum) || '-' || case when month(f1.datum) < 7 then 1 else 2 end as arhalvar,
+f1.kundnr as kundnr,
+coalesce(a.rabkod,'Övrigt') as rabkod, coalesce(rk.beskrivning,'Övrigt') as produktgrupp,
+f2.summa*case when f1.bonus <> 0 then 0.95 else 1 end as summa, case when f2.netto=0 then 0 else f2.summa*case when f1.bonus <> 0 then 0.95 else 1 end-f2.lev*f2.netto end as tackning,
+f1.lagernr as lagernr, lid.bnamn as lagernamn, coalesce(s.namn,'L' || trim(to_char(f1.lagernr,'09'))) as saljare, 
+coalesce(s.lagernr, f1.lagernr) as saljarelager
+, k.distrikt as distrikt
+, substring(replace(k.adr3,' ',''),1,5) as postnr
+, upper(right(k.adr3,position(substring(replace(k.adr3,' ',''),6,1) in k.adr3)*-1+1)) as ort
+from
+faktura2 f2 join faktura1 f1 on f1.faktnr=f2.faktnr 
+left outer join kund k on k.nummer=f1.kundnr
+left outer join lagerid lid on lid.lagernr=f1.lagernr
+left outer join saljare s on s.namn=trim(substring(f1.saljare,1,30))
+left outer join artikel a on a.nummer=f2.artnr
+left outer join rabkoder rk on rk.rabkod=a.rabkod and coalesce(rk.kod1,'')=''
+where f2.artnr not in ('*BONUS*','*RÄNTA*') and f2.lev <> 0
+)
