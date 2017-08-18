@@ -1,5 +1,6 @@
 package se.saljex.sxserver;
 
+import se.saljex.sxlibrary.OrderImport;
 import se.saljex.sxlibrary.exceptions.SxOrderLastException;
 import se.saljex.sxlibrary.exceptions.SXEntityNotFoundException;
 import se.saljex.sxlibrary.SxServerMainRemote;
@@ -756,6 +757,41 @@ public class SxServerMainBean implements SxServerMainLocal, SxServerMainRemote {
 			return orderList;
 		} else return null;
 	}
+
+        
+     // Läs in och spara en order från någon import. Inga koller görs om lagersaldon, orderdelning mm. 
+        // ordern sparas avvaktande för manuell kontroll
+	@RolesAllowed("admin")
+    @Override
+    public java.util.List<Integer> importOrder(String anvandare, java.util.List<OrderImport> order) throws SxInfoException{
+        ArrayList<Integer> sparadeOrdernr = new ArrayList<Integer>();
+        for (OrderImport orderImport : order) {
+            OrderHandler oh = new OrderHandler(em, orderImport.getKundnr(), orderImport.getLagernr(), anvandare);
+            oh.setLevAdr(orderImport.getLevAdr1TrimedToMaxLength(), orderImport.getLevAdr2TrimedToMaxLength(), orderImport.getLevAdr3TrimedToMaxLength());
+            oh.setMarke(orderImport.getMarkeTrimmedToMaxLength());
+            oh.setStatus("Avvakt");
+            for (OrderImport.OrderRad or : orderImport.getOrderRader()) {
+                if (or.getArtnr()==null && or.getTextrad()!=null) {
+                    oh.addTextRow(or.getTextradTrimmedToMaxLength());
+                } else if(or.getArtnr()!=null) {
+                    if (or.getArtnr().startsWith("*")) {
+                        oh.addStjRow(or.getNamnTrimmedToMaxLength(), or.getNamn(), "", or.getAntal(), "", 0, 0, 0);
+                    } else {
+                        try {
+                            oh.addRow(or.getArtnrTrimmedToMaxLength(), or.getAntal());
+                        } catch(SXEntityNotFoundException e) {
+                            String ts;
+                            if (or.getArtnr().length() > 12) ts = or.getArtnr().substring(0,12); else ts=or.getArtnr();
+                            oh.addStjRow("*"+ts, or.getNamnTrimmedToMaxLength(), "", or.getAntal(), "", 0, 0, 0);
+                        }
+                    }
+                }
+            }
+            oh.persistOrder();
+            sparadeOrdernr.add(oh.getOrdernr());
+        }
+        return sparadeOrdernr;
+    }
 
 
 	

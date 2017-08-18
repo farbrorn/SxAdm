@@ -17,6 +17,7 @@ import javax.servlet.http.*;
 import com.lowagie.text.DocumentException;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.List;
 import javax.mail.MessagingException;
 import se.saljex.sxlibrary.exceptions.SxInfoException;
 import se.saljex.sxserver.tables.TableOrder1;
@@ -82,6 +83,8 @@ public interface SxServerMainLocal {
 
 	int saveOrder(String anvandare, TableOrder1 copyFromTableOrder1, ArrayList<OrderHandlerRad> orderRader) throws SXEntityNotFoundException, KreditSparrException, SxInfoException;
 	int saveOffert(String anvandare, TableOrder1 copyFromTableOrder1, ArrayList<OrderHandlerRad> orderRader) throws SXEntityNotFoundException;
+
+    //List<Integer> importOrder(String anvandare, List<OrderImport> order) throws SxInfoException;
 
 	
 }
