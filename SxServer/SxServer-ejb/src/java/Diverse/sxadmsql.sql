@@ -2569,3 +2569,10 @@ left outer join artikel a on a.nummer=f2.artnr
 left outer join rabkoder rk on rk.rabkod=a.rabkod and coalesce(rk.kod1,'')=''
 where f2.artnr not in ('*BONUS*','*RÄNTA*') and f2.lev <> 0
 )
+
+
+
+//2017-10-12
+create table artinventlist1  (id integer not null, lagernr smallint not null, datum date default current_date, beskrivning varchar, primary key (id) );
+create table artinventlist2  (id integer not null, artnr varchar not null, primary key (id, artnr));
+alter table artinventlist1 add utskriftdat date;
