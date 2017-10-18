@@ -141,6 +141,11 @@ public class OverforOrder {
 		mainOrderHandler.setKundordernr(localOrder.getOrdernr());
 		mainOrderHandler.setForskatt(localOrder.getForskatt());
 		mainOrderHandler.setForskattbetald(localOrder.getForskattbetald());
+                if (!SXUtil.isEmpty(localOrder.getLinjenr1()) || !SXUtil.isEmpty(localOrder.getLinjenr2()) || !SXUtil.isEmpty(localOrder.getLinjenr3())) {
+                    mainOrderHandler.setLinjenr1(localOrder.getLinjenr1());
+                    mainOrderHandler.setLinjenr2(localOrder.getLinjenr2());
+                    mainOrderHandler.setLinjenr3(localOrder.getLinjenr3());
+                }
 		for (LocalOrderRad localOrderRad : localOrderRader) {
 			try {
 				mainOrderHandler.addRow(localOrderRad.mainArtnr, localOrderRad.nyttAntal);
@@ -185,6 +190,10 @@ public class OverforOrder {
 		public String getAdr3() { return utlev1==null ? order1.getAdr3() : utlev1.getAdr3(); }
 		public String getNamn() { return utlev1==null ? order1.getNamn() : utlev1.getNamn(); }
 		public String getMarke() { return utlev1==null ? order1.getMarke() : utlev1.getMarke(); }
+                
+		public String getLinjenr1() { return utlev1==null ? order1.getLinjenr1(): utlev1.getLinjenr1(); }
+		public String getLinjenr2() { return utlev1==null ? order1.getLinjenr2(): utlev1.getLinjenr2(); }
+		public String getLinjenr3() { return utlev1==null ? order1.getLinjenr3(): utlev1.getLinjenr3(); }
 		public boolean getForskatt() { return utlev1==null ? order1.getForskatt() : utlev1.getForskatt(); }
 		public boolean getForskattbetald() { return utlev1==null ? order1.getForskattbetald() : utlev1.getForskattbetald(); }
 		public int getOrdernr() { return utlev1==null ? order1.getOrdernr() : utlev1.getOrdernr(); }

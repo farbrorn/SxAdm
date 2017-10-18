@@ -266,6 +266,13 @@ public class OrderHandler {
 	public void setBonus(boolean bonus) { if (bonus) or1.setBonus((short)1); else or1.setBonus((short)0); }
 	public boolean isBonus() { return or1.getBonus() > 0; }
 
+        public String getLinjenr1() { return or1.getLinjenr1(); }
+        public String getLinjenr2() { return or1.getLinjenr2(); }
+        public String getLinjenr3() { return or1.getLinjenr3(); }
+        
+        public void setLinjenr1(String linjenr) { or1.setLinjenr1(linjenr); }
+        public void setLinjenr2(String linjenr) { or1.setLinjenr2(linjenr); }
+        public void setLinjenr3(String linjenr) { or1.setLinjenr3(linjenr); }
 	public void addBonus(TableBonus bonus) {
 		ord = new OrderHandlerRad();
 
