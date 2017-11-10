@@ -2452,8 +2452,11 @@ round(least(
 	((k.installator*1+k.butik*2+k.industri*4+k.oem*8+k.grossist*16) & coalesce(a.kampkundgrp,0)) > 0 then 
 		a.kamppris 
 	else 
-		a.utpris * (1-greatest(k.basrab, r2.rab, r.rab)/100) 
+		a.utpris 
 	end,
+	 
+	a.utpris * (1-greatest(case when upper(a.rabkod)='NTO' then 0 else k.basrab end, case when upper(a.rabkod)='NTO' then 0 else r2.rab end, r.rab)/100) ,
+	
 	case when n.pris > 0 then n.pris else a.utpris end
 )::numeric,2) as kundnetto_bas,
 
@@ -2464,8 +2467,10 @@ round(
 			((k.installator*1+k.butik*2+k.industri*4+k.oem*8+k.grossist*16) & coalesce(a.kampkundgrp,0)) > 0  then 
 					a.kampprisstaf1 
 			else 
-				a.staf_pris1  * (1-greatest(k.basrab, r2.rab, r.rab)/100)
+				a.utpris
 			end,
+			a.staf_pris1  * (1-greatest(case when upper(a.rabkod)='NTO' then 0 else k.basrab end, case when upper(a.rabkod)='NTO' then 0 else r2.rab end, r.rab)/100) ,
+			
 			case when n.pris > 0 then n.pris else a.utpris end
 		)
 
@@ -2483,8 +2488,10 @@ round(
 			((k.installator*1+k.butik*2+k.industri*4+k.oem*8+k.grossist*16) & coalesce(a.kampkundgrp,0)) > 0  then 
 					a.kampprisstaf2 
 			else 
-				a.staf_pris2  * (1-greatest(k.basrab, r2.rab, r.rab)/100)
+				a.utpris
 			end,
+			a.staf_pris2  * (1-greatest(case when upper(a.rabkod)='NTO' then 0 else k.basrab end, case when upper(a.rabkod)='NTO' then 0 else r2.rab end, r.rab)/100) ,
+			
 			case when n.pris > 0 then n.pris else a.utpris end
 		)
 
@@ -2505,6 +2512,11 @@ LEFT JOIN kunrab r2 ON r2.kundnr::text = k.nummer::text AND COALESCE(r2.rabkod, 
 LEFT JOIN kunrab r ON r.kundnr::text = k.nummer::text AND COALESCE(r.rabkod, ''::character varying)::text = COALESCE(a.rabkod, ''::character varying)::text AND COALESCE(r.kod1, ''::character varying)::text = COALESCE(a.kod1, ''::character varying)::text
 LEFT JOIN nettopri n ON n.lista::text = k.nettolst::text AND n.artnr::text = a.nummer::text
 ;
+
+
+
+
+
 
 create table butikautologin (uuid varchar not null,  kontaktid integer, primary key (uuid), expiredate date not null default current_date)
 alter table artklase add column autosortvikt integer not null default 0;
