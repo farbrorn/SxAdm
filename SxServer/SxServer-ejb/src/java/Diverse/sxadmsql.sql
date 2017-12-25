@@ -2433,6 +2433,15 @@ order by v.kontaktid, g.max_ch_timestamp, akl.sortorder, akl.artnr
 )
 
 
+alter table artklase add column autosortvikt integer not null default 0;
+alter table artklase add column autoantalorderrader integer not null default 0;
+alter table artklase add column rekommenderadprio integer not null default 0;
+alter table artklase add column auto_sokord varchar;
+alter table artklase add column auto_sokartnr varchar;
+alter table artklase add column auto_sokrefnr varchar;
+alter table artklase add column auto_bildartnr varchar;
+alter table artklase add column auto_samkopta_klasar varchar;
+
 create or replace view vbutikart as
 select  
 ak.klasid as ak_klasid, ak.rubrik as ak_rubrik, ak.text as ak_text, ak.html as ak_html, ak.autosortvikt as ak_autosortvikt,
@@ -2519,8 +2528,6 @@ LEFT JOIN nettopri n ON n.lista::text = k.nettolst::text AND n.artnr::text = a.n
 
 
 create table butikautologin (uuid varchar not null,  kontaktid integer, primary key (uuid), expiredate date not null default current_date)
-alter table artklase add column autosortvikt integer not null default 0;
-alter table artklase add column autoantalorderrader integer not null default 0;
 
 
 create table hemsidasidor (sidid varchar not null, status varchar, rubrik varchar, html varchar, primary key (sidid));  
@@ -2538,12 +2545,6 @@ create temp table t2 on commit drop as 	( select max(autoantalorderrader) as mx 
 update artklase set autosortvikt = 5000/(select max(mx) from t2)*autoantalorderrader;
 --Slut script
 
-alter table artklase add column rekommenderadprio integer not null default 0;
-alter table artklase add column auto_sokord varchar;
-alter table artklase add column auto_sokartnr varchar;
-alter table artklase add column auto_sokrefnr varchar;
-alter table artklase add column auto_bildartnr varchar;
-alter table artklase add column auto_samkopta_klasar varchar;
 
 
 create table eankoder (artnr varchar, ean varchar, enheterperean numeric(12,6), primary key (artnr, ean) );
