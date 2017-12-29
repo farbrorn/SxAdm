@@ -2445,7 +2445,7 @@ alter table artklase add column auto_samkopta_klasar varchar;
 create or replace view vbutikart as
 select  
 ak.klasid as ak_klasid, ak.rubrik as ak_rubrik, ak.text as ak_text, ak.html as ak_html, ak.autosortvikt as ak_autosortvikt,
-akl.sortorder as akl_sortorder, ak.auto_samkopta_klasar as ak_auto_samkopta_klasar,
+akl.sortorder as akl_sortorder, ak.auto_samkopta_klasar as ak_auto_samkopta_klasar
 a.*,
 lid.lagernr as lid_lagernr, lid.bnamn as lid_bnamn, lid.namn as lid_namn, lid.adr1 as lid_adr1, lid.adr2 as lid_adr2, lid.adr3 as lid_adr3,lid.tel as lid_tel, lid.email as lid_email,
 lid.lagernr as l_lagernr, coalesce(l.ilager,0) as l_ilager, coalesce(l.bestpunkt,0) as l_bestpunkt, coalesce(l.maxlager,0) as l_maxlager, coalesce(l.best,0) as l_best, coalesce(l.iorder,0) as l_iorder,
@@ -2509,7 +2509,7 @@ round(
 	end::numeric
 
 
-,2) as kundnetto_staf2
+,2) as kundnetto_staf2, ak.auto_bildartnr as ak_auto_bildartnr
 
 from artklase ak 
 join artklaselank akl on akl.klasid=ak.klasid 
