@@ -2592,4 +2592,5 @@ alter table artinventlist1 add utskriftdat date;
 
 //2018-01-01
 alter table artklase add column webbeskrivningfrangrpid integer;
+create sequence tempartnr start 1000;
 
