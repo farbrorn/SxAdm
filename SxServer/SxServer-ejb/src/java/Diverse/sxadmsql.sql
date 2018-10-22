@@ -2457,8 +2457,8 @@ n.lista as n_lista,
 coalesce (n.pris,0) as n_pris,
 
 round(least(
-	case when a.kamppris > 0 and current_date between a.kampfrdat and a.kamptidat and (k.elkund*1+k.vvskund*2+k.vakund*4+k.golvkund*8+k.fastighetskund*16) & coalesce(a.kampkundartgrp,0) > 0 and
-	((k.installator*1+k.butik*2+k.industri*4+k.oem*8+k.grossist*16) & coalesce(a.kampkundgrp,0)) > 0 then 
+	case when a.kamppris > 0 and current_date between a.kampfrdat and a.kamptidat and ((k.elkund*1+k.vvskund*2+k.vakund*4+k.golvkund*8+k.fastighetskund*16) & coalesce(a.kampkundartgrp,0) > 0 or a.kampkundartgrp=0) and
+	(((k.installator*1+k.butik*2+k.industri*4+k.oem*8+k.grossist*16) & coalesce(a.kampkundgrp,0)) > 0 or a.kampkundgrp=0) then 
 		a.kamppris 
 	else 
 		a.utpris 
@@ -2472,13 +2472,13 @@ round(least(
 round(
 	case when a.staf_antal1 > 0  then
 		least(
-			case when a.kampprisstaf1 > 0 and current_date between a.kampfrdat and a.kamptidat and (k.elkund*1+k.vvskund*2+k.vakund*4+k.golvkund*8+k.fastighetskund*16) & coalesce(a.kampkundartgrp,0) > 0 and
-			((k.installator*1+k.butik*2+k.industri*4+k.oem*8+k.grossist*16) & coalesce(a.kampkundgrp,0)) > 0  then 
-					a.kampprisstaf1 
+			case when a.kampprisstaf1 > 0 and current_date between a.kampfrdat and a.kamptidat and ((k.elkund*1+k.vvskund*2+k.vakund*4+k.golvkund*8+k.fastighetskund*16) & coalesce(a.kampkundartgrp,0) > 0 or a.kampkundartgrp=0) and
+			(((k.installator*1+k.butik*2+k.industri*4+k.oem*8+k.grossist*16) & coalesce(a.kampkundgrp,0)) > 0 or a.kampkundgrp=0)  then 
+					least(a.kampprisstaf1, a.kamppris) 
 			else 
 				a.utpris
 			end,
-			a.staf_pris1  * (1-greatest(case when upper(a.rabkod)='NTO' then 0 else k.basrab end, case when upper(a.rabkod)='NTO' then 0 else r2.rab end, r.rab)/100) ,
+			least(a.staf_pris1, a.utpris)  * (1-greatest(case when upper(a.rabkod)='NTO' then 0 else k.basrab end, case when upper(a.rabkod)='NTO' then 0 else r2.rab end, r.rab)/100) ,
 			
 			case when n.pris > 0 then n.pris else a.utpris end
 		)
@@ -2493,13 +2493,13 @@ round(
 round(
 	case when a.staf_antal2 > 0  then
 		least(
-			case when a.kampprisstaf2 > 0 and current_date between a.kampfrdat and a.kamptidat and (k.elkund*1+k.vvskund*2+k.vakund*4+k.golvkund*8+k.fastighetskund*16) & coalesce(a.kampkundartgrp,0) > 0 and
-			((k.installator*1+k.butik*2+k.industri*4+k.oem*8+k.grossist*16) & coalesce(a.kampkundgrp,0)) > 0  then 
-					a.kampprisstaf2 
+			case when a.kampprisstaf2 > 0 and current_date between a.kampfrdat and a.kamptidat and ((k.elkund*1+k.vvskund*2+k.vakund*4+k.golvkund*8+k.fastighetskund*16) & coalesce(a.kampkundartgrp,0) > 0 or a.kampkundartgrp=0) and
+			(((k.installator*1+k.butik*2+k.industri*4+k.oem*8+k.grossist*16) & coalesce(a.kampkundgrp,0)) > 0 or a.kampkundgrp=0)  then 
+					least(a.kampprisstaf2, a.kampprisstaf1, a.kamppris) 
 			else 
 				a.utpris
 			end,
-			a.staf_pris2  * (1-greatest(case when upper(a.rabkod)='NTO' then 0 else k.basrab end, case when upper(a.rabkod)='NTO' then 0 else r2.rab end, r.rab)/100) ,
+			least(a.staf_pris2, a.staf_pris1, a.utpris)  * (1-greatest(case when upper(a.rabkod)='NTO' then 0 else k.basrab end, case when upper(a.rabkod)='NTO' then 0 else r2.rab end, r.rab)/100) ,
 			
 			case when n.pris > 0 then n.pris else a.utpris end
 		)
