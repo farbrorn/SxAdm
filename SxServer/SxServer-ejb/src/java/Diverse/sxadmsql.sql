@@ -2594,3 +2594,11 @@ alter table artinventlist1 add utskriftdat date;
 alter table artklase add column webbeskrivningfrangrpid integer;
 create sequence tempartnr start 1000;
 
+//2018-10-23
+create table hemsidameddelande (id serial primary key, crdt date not null default current_date, status varchar, 
+    startdatum date not null, slutdatum date not null, rubrik varchar not null, htmlm varchar not null,
+    filter_butik integer not null default 0 , filter_installator integer not null default 0, filter_grossist integer not null default 0, filter_industri integer not null default 0, filter_oem integer not null default 0,
+    filter_elkund integer not null default 0, filter_vvskund integer not null default 0, filter_vakund integer not null default 0,
+    filter_nettolista varchar, filter_kundgrupp varchar, filter_turbil integer not null default 0);
+
+ 
