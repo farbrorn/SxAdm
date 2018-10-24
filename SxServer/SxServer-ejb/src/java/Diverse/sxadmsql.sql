@@ -2474,7 +2474,7 @@ round(
 		least(
 			case when a.kampprisstaf1 > 0 and current_date between a.kampfrdat and a.kamptidat and ((k.elkund*1+k.vvskund*2+k.vakund*4+k.golvkund*8+k.fastighetskund*16) & coalesce(a.kampkundartgrp,0) > 0 or a.kampkundartgrp=0) and
 			(((k.installator*1+k.butik*2+k.industri*4+k.oem*8+k.grossist*16) & coalesce(a.kampkundgrp,0)) > 0 or a.kampkundgrp=0)  then 
-					least(a.kampprisstaf1, a.kamppris) 
+					least(case when a.kampprisstaf1 <> 0 then a.kampprisstaf1 else a.utpris end, case when a.kamppris <> 0 then a.kamppris else a.utpris end ) 
 			else 
 				a.utpris
 			end,
@@ -2495,11 +2495,11 @@ round(
 		least(
 			case when a.kampprisstaf2 > 0 and current_date between a.kampfrdat and a.kamptidat and ((k.elkund*1+k.vvskund*2+k.vakund*4+k.golvkund*8+k.fastighetskund*16) & coalesce(a.kampkundartgrp,0) > 0 or a.kampkundartgrp=0) and
 			(((k.installator*1+k.butik*2+k.industri*4+k.oem*8+k.grossist*16) & coalesce(a.kampkundgrp,0)) > 0 or a.kampkundgrp=0)  then 
-					least(a.kampprisstaf2, a.kampprisstaf1, a.kamppris) 
+					least(case when a.kampprisstaf2 <> 0 then a.kampprisstaf2 else a.utpris end, case when a.kampprisstaf1 <> 0 then a.kampprisstaf1 else a.utpris end, case when a.kamppris <> 0 then a.kamppris else a.utpris end) 
 			else 
 				a.utpris
 			end,
-			least(a.staf_pris2, a.staf_pris1, a.utpris)  * (1-greatest(case when upper(a.rabkod)='NTO' then 0 else k.basrab end, case when upper(a.rabkod)='NTO' then 0 else r2.rab end, r.rab)/100) ,
+			least(a.staf_pris2, case when a.kamppris <> 0 then a.kamppris else a.kampprisstaf1 end, a.utpris)  * (1-greatest(case when upper(a.rabkod)='NTO' then 0 else k.basrab end, case when upper(a.rabkod)='NTO' then 0 else r2.rab end, r.rab)/100) ,
 			
 			case when n.pris > 0 then n.pris else a.utpris end
 		)
@@ -2521,6 +2521,7 @@ LEFT JOIN kunrab r2 ON r2.kundnr::text = k.nummer::text AND COALESCE(r2.rabkod, 
 LEFT JOIN kunrab r ON r.kundnr::text = k.nummer::text AND COALESCE(r.rabkod, ''::character varying)::text = COALESCE(a.rabkod, ''::character varying)::text AND COALESCE(r.kod1, ''::character varying)::text = COALESCE(a.kod1, ''::character varying)::text
 LEFT JOIN nettopri n ON n.lista::text = k.nettolst::text AND n.artnr::text = a.nummer::text
 ;
+
 
 
 
@@ -2596,7 +2597,7 @@ create sequence tempartnr start 1000;
 
 //2018-10-23
 create table hemsidameddelande (id serial primary key, crdt date not null default current_date, status varchar, 
-    startdatum date not null, slutdatum date not null, rubrik varchar not null, htmlm varchar not null,
+    startdatum date not null, slutdatum date not null, rubrik varchar not null, html varchar not null,
     filter_butik integer not null default 0 , filter_installator integer not null default 0, filter_grossist integer not null default 0, filter_industri integer not null default 0, filter_oem integer not null default 0,
     filter_elkund integer not null default 0, filter_vvskund integer not null default 0, filter_vakund integer not null default 0,
     filter_nettolista varchar, filter_kundgrupp varchar, filter_turbil integer not null default 0);
