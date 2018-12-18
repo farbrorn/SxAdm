@@ -2813,4 +2813,51 @@ CREATE OR REPLACE VIEW vbutikart AS
    left outer join gruppnetto gn on gn.artnr=a.nummer and gn.grpnr=kungl.grpnr and current_date between gn.frdat and gn.tidat
    group by a.nummer, ak.klasid, akl.sortorder, lid.lagernr, l.lagernr, l.artnr, k.nummer, r2.rab, r.rab, n.lista, n.artnr
    ;
+
+
+
+create or replace function orderAdd(in_anvandare varchar, in_lagernr integer, in_kundnr varchar, in_marke varchar, in_artnr varchar[], in_antal real[], in_pris real[], in_rab real[])
+returns integer as $$
+declare
+	this_ordernr integer;
+	this_cn integer;
+begin
+	
+	if not exists (select from lagerid where lagerid.lagernr=in_lagernr) then raise exception 'Lagernummer % saknas', in_lagernr; end if;
+	if not exists (select from saljare where forkortning=in_anvandare) then raise exception 'Användare % saknas', in_anvandare; end if;
+	if not exists (select from kund where nummer=in_kundnr) then raise exception 'Kundnummer % saknas', in_kundnr; end if;
+	
+	select fdordernr.ordernr into this_ordernr from fdordernr;
+	update fdordernr set ordernr = ordernr+1;
+	insert into order1 (ordernr, dellev, namn, adr1, adr2, adr3, levadr1, levadr2, levadr3, 
+		saljare, referens, kundnr, marke, datum, moms, status, ktid, bonus, faktor, levdat, 
+		levvillkor, mottagarfrakt, fraktkundnr, fraktbolag, fraktfrigrans, lagernr, 
+		direktlevnr, returorder, veckolevdag, tillannanfilial, utlevbokad, annanlevadress, wordernr, 
+		linjenr1, linjenr2, linjenr3)
+		select this_ordernr, 1, namn, adr1, adr2, adr3, lnamn, ladr2, ladr3,
+		saljare, ref, nummer, in_marke, current_date, case when momsfri <> 0 then 0 else 1 end, 'Sparad', ktid, bonus, faktor, null,
+		levvillkor, mottagarfrakt, fraktkundnr, fraktbolag, fraktfrigrans, in_lagernr, 
+		0, 0, 0, 0, 0, 0, 0,
+		coalesce(linjenr1,''), coalesce(linjenr2,''), coalesce(linjenr3,'')
+		from kund where nummer=in_kundnr;
+
+	insert into orderhand (ordernr, datum, tid, anvandare, handelse, nyordernr, antalkolli, totalvikt) values (this_ordernr, current_date, current_time, in_anvandare, 'Skapad', 0, 0, 0); 
+
+
+for this_cn in 1..array_upper(in_artnr,1) loop
+	if not exists (select from artikel where nummer = in_artnr[this_cn]) then raise exception 'Artikel % finns inte', in_artnr[this_cn]; end if;
+	if in_antal[this_cn] is null then raise exception 'Antal för artikel % är null', in_artnr[this_cn]; end if;
+	if in_pris[this_cn] is null then raise exception 'Pris för artikel % är null', in_artnr[this_cn]; end if;
+	insert into order2 (ordernr, pos, prisnr, dellev, artnr, namn, levnr, best, rab, lev, pris, summa, konto, netto, enh, stjid)
+		select this_ordernr, this_cn, 1, 1, nummer, namn, lev, in_antal[this_cn] , coalesce(in_rab[this_cn],0), in_antal[this_cn], in_pris[this_cn], round((in_pris[this_cn]*in_antal[this_cn]*(1-coalesce(in_rab[this_cn],0)/100))::numeric,2) , konto, round((inpris*(1-rab/100)*(1+inp_fraktproc/100)+inp_frakt+inp_miljo)::numeric,2), enhet, 0
+		from artikel where nummer=in_artnr[this_cn];
+	if not exists (select from lager where artnr = in_artnr[this_cn] and lagernr = in_lagernr) then insert into lager (artnr, lagernr, ilager, bestpunkt, maxlager, best, iorder, hindrafilialbest) values (in_artnr[this_cn], in_lagernr, 0,0,0,0,0,0); end if;
+	update lager set iorder=iorder+in_antal[this_cn] where artnr=in_artnr[this_cn] and lagernr=in_lagernr;
+end loop; 
+
+
+	return this_ordernr;
+end;
+$$ language plpgsql;
+
  
