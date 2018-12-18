@@ -2602,4 +2602,215 @@ create table hemsidameddelande (id serial primary key, crdt date not null defaul
     filter_elkund integer not null default 0, filter_vvskund integer not null default 0, filter_vakund integer not null default 0,
     filter_nettolista varchar, filter_kundgrupp varchar, filter_turbil integer not null default 0);
 
+//2018-12-18
+// Håller reda på nettopriser till kundgrupper. Ej för gammal klient.
+create table gruppnetto (grpnr varchar(20) not null, artnr varchar(13) not null, frdat date not null, tidat date not null, netto real, netto_staf1 real, netto_staf2 real);
+create index gruppnetto_idx on gruppnetto (artnr);
+
+//2018-12-18 Uppdaterar vbutikart till att inkludera netto från kundgrupper
+CREATE OR REPLACE VIEW vbutikart AS 
+ SELECT ak.klasid AS ak_klasid,
+    ak.rubrik AS ak_rubrik,
+    ak.text AS ak_text,
+    ak.html AS ak_html,
+    ak.autosortvikt AS ak_autosortvikt,
+    akl.sortorder AS akl_sortorder,
+    ak.auto_samkopta_klasar AS ak_auto_samkopta_klasar,
+    a.nummer,
+    a.namn,
+    a.lev,
+    a.bestnr,
+    a.enhet,
+    a.utpris,
+    a.staf_pris1,
+    a.staf_pris2,
+    a.staf_pris1_dat,
+    a.staf_pris2_dat,
+    a.staf_antal1,
+    a.staf_antal2,
+    a.inpris,
+    a.rab,
+    a.utrab,
+    a.inp_pris,
+    a.inp_rab,
+    a.inp_fraktproc,
+    a.inp_valuta,
+    a.inp_datum,
+    a.konto,
+    a.rabkod,
+    a.kod1,
+    a.prisdatum,
+    a.inpdat,
+    a.tbidrag,
+    a.refnr,
+    a.vikt,
+    a.volym,
+    a.rordat,
+    a.struktnr,
+    a.forpack,
+    a.kop_pack,
+    a.kampfrdat,
+    a.kamptidat,
+    a.kamppris,
+    a.kampprisstaf1,
+    a.kampprisstaf2,
+    a.inp_miljo,
+    a.inp_frakt,
+    a.anvisnr,
+    a.staf_pris1ny,
+    a.staf_pris2ny,
+    a.inprisny,
+    a.inprisnydat,
+    a.inprisnyrab,
+    a.utprisny,
+    a.utprisnyavbokdat,
+    a.utprisnydat,
+    a.rsk,
+    a.enummer,
+    a.kampkundartgrp,
+    a.kampkundgrp,
+    a.cn8,
+    a.fraktvillkor,
+    a.dagspris,
+    a.hindraexport,
+    a.utgattdatum,
+    a.minsaljpack,
+    a.storpack,
+    a.prisgiltighetstid,
+    a.onskattb,
+    a.onskattbstaf1,
+    a.onskattbstaf2,
+    a.salda,
+    a.direktlev,
+    a.katnamn,
+    a.bildartnr,
+    a.plockinstruktion,
+    a.inp_enh,
+    a.inp_enhetsfaktor,
+    a.ean,
+    a.jpaversion,
+    lid.lagernr AS lid_lagernr,
+    lid.bnamn AS lid_bnamn,
+    lid.namn AS lid_namn,
+    lid.adr1 AS lid_adr1,
+    lid.adr2 AS lid_adr2,
+    lid.adr3 AS lid_adr3,
+    lid.tel AS lid_tel,
+    lid.email AS lid_email,
+    lid.lagernr AS l_lagernr,
+    COALESCE(l.ilager, 0::real) AS l_ilager,
+    COALESCE(l.bestpunkt, 0::real) AS l_bestpunkt,
+    COALESCE(l.maxlager, 0::real) AS l_maxlager,
+    COALESCE(l.best, 0::real) AS l_best,
+    COALESCE(l.iorder, 0::real) AS l_iorder,
+    k.nummer AS k_nummer,
+    COALESCE(k.basrab, 0::real) AS kunrab_bas,
+    COALESCE(r.rab, 0::real) AS kunrab_grupp,
+    COALESCE(r2.rab, 0::real) AS kunrab_undergrupp,
+    n.lista AS n_lista,
+    COALESCE(n.pris, 0::real) AS n_pris,
+    round(LEAST(
+	nullif(min(gn.netto),0),
+        CASE
+            WHEN a.kamppris > 0::double precision AND 'now'::text::date >= a.kampfrdat AND 'now'::text::date <= a.kamptidat AND (((k.elkund * 1 + k.vvskund * 2 + k.vakund * 4 + k.golvkund * 8 + k.fastighetskund * 16) & COALESCE(a.kampkundartgrp::integer, 0)) > 0 OR a.kampkundartgrp = 0) AND (((k.installator * 1 + k.butik * 2 + k.industri * 4 + k.oem * 8 + k.grossist * 16) & COALESCE(a.kampkundgrp::integer, 0)) > 0 OR a.kampkundgrp = 0) THEN a.kamppris
+            ELSE a.utpris
+        END::double precision, a.utpris * (1::double precision - GREATEST(
+        CASE
+            WHEN upper(a.rabkod::text) = 'NTO'::text THEN 0::real
+            ELSE k.basrab
+        END,
+        CASE
+            WHEN upper(a.rabkod::text) = 'NTO'::text THEN 0::real
+            ELSE r2.rab
+        END, r.rab) / 100::double precision),
+        CASE
+            WHEN n.pris > 0::double precision THEN n.pris
+            ELSE a.utpris
+        END::double precision)::numeric, 2) AS kundnetto_bas,
+    round(
+        CASE
+            WHEN a.staf_antal1 > 0::double precision THEN LEAST(
+            least(nullif(min(gn.netto_staf1),0), nullif(min(gn.netto),0)),   
+            CASE
+                WHEN a.kampprisstaf1 > 0::double precision AND 'now'::text::date >= a.kampfrdat AND 'now'::text::date <= a.kamptidat AND (((k.elkund * 1 + k.vvskund * 2 + k.vakund * 4 + k.golvkund * 8 + k.fastighetskund * 16) & COALESCE(a.kampkundartgrp::integer, 0)) > 0 OR a.kampkundartgrp = 0) AND (((k.installator * 1 + k.butik * 2 + k.industri * 4 + k.oem * 8 + k.grossist * 16) & COALESCE(a.kampkundgrp::integer, 0)) > 0 OR a.kampkundgrp = 0) THEN LEAST(
+                CASE
+                    WHEN a.kampprisstaf1 <> 0::double precision THEN a.kampprisstaf1
+                    ELSE a.utpris
+                END,
+                CASE
+                    WHEN a.kamppris <> 0::double precision THEN a.kamppris
+                    ELSE a.utpris
+                END)
+                ELSE a.utpris
+            END::double precision, LEAST(a.staf_pris1, a.utpris) * (1::double precision - GREATEST(
+            CASE
+                WHEN upper(a.rabkod::text) = 'NTO'::text THEN 0::real
+                ELSE k.basrab
+            END,
+            CASE
+                WHEN upper(a.rabkod::text) = 'NTO'::text THEN 0::real
+                ELSE r2.rab
+            END, r.rab) / 100::double precision),
+            CASE
+                WHEN n.pris > 0::double precision THEN n.pris
+                ELSE a.utpris
+            END::double precision)
+            ELSE 0::double precision
+        END::numeric, 2) AS kundnetto_staf1,
+    round( 
+        CASE
+            WHEN a.staf_antal2 > 0::double precision THEN LEAST(
+            least(nullif(min(gn.netto_staf2),0), nullif(min(gn.netto_staf1),0), nullif(min(gn.netto),0)),
+            CASE
+                WHEN a.kampprisstaf2 > 0::double precision AND 'now'::text::date >= a.kampfrdat AND 'now'::text::date <= a.kamptidat AND (((k.elkund * 1 + k.vvskund * 2 + k.vakund * 4 + k.golvkund * 8 + k.fastighetskund * 16) & COALESCE(a.kampkundartgrp::integer, 0)) > 0 OR a.kampkundartgrp = 0) AND (((k.installator * 1 + k.butik * 2 + k.industri * 4 + k.oem * 8 + k.grossist * 16) & COALESCE(a.kampkundgrp::integer, 0)) > 0 OR a.kampkundgrp = 0) THEN LEAST(
+                CASE
+                    WHEN a.kampprisstaf2 <> 0::double precision THEN a.kampprisstaf2
+                    ELSE a.utpris
+                END,
+                CASE
+                    WHEN a.kampprisstaf1 <> 0::double precision THEN a.kampprisstaf1
+                    ELSE a.utpris
+                END,
+                CASE
+                    WHEN a.kamppris <> 0::double precision THEN a.kamppris
+                    ELSE a.utpris
+                END)
+                ELSE a.utpris
+            END::double precision, LEAST(a.staf_pris2,
+            CASE
+                WHEN a.kamppris <> 0::double precision THEN a.kamppris
+                ELSE a.kampprisstaf1
+            END, a.utpris) * (1::double precision - GREATEST(
+            CASE
+                WHEN upper(a.rabkod::text) = 'NTO'::text THEN 0::real
+                ELSE k.basrab
+            END,
+            CASE
+                WHEN upper(a.rabkod::text) = 'NTO'::text THEN 0::real
+                ELSE r2.rab
+            END, r.rab) / 100::double precision),
+            CASE
+                WHEN n.pris > 0::double precision THEN n.pris
+                ELSE a.utpris
+            END::double precision)
+            ELSE 0::double precision
+        END::numeric, 2) AS kundnetto_staf2,
+    ak.auto_bildartnr AS ak_auto_bildartnr,
+    ak.webbeskrivningfrangrpid AS ak_webbeskrivningfrangrpid,
+            min(nullif(gn.netto,0)) as gn_minnetto,
+            min(nullif(gn.netto_staf1,0)) as gn_minnetto_staf1,
+            min(nullif(gn.netto_staf2,0)) as gn_minnetto_staf2
+   FROM artklase ak
+   JOIN artklaselank akl ON akl.klasid = ak.klasid
+   JOIN artikel a ON a.nummer::text = akl.artnr::text
+   JOIN lagerid lid ON 1 = 1
+   LEFT JOIN lager l ON l.artnr::text = a.nummer::text AND l.lagernr = lid.lagernr
+   LEFT JOIN kund k ON 1 = 1
+   LEFT JOIN kunrab r2 ON r2.kundnr::text = k.nummer::text AND COALESCE(r2.rabkod, ''::character varying)::text = COALESCE(a.rabkod, ''::character varying)::text AND COALESCE(r2.kod1, ''::character varying)::text = ''::text
+   LEFT JOIN kunrab r ON r.kundnr::text = k.nummer::text AND COALESCE(r.rabkod, ''::character varying)::text = COALESCE(a.rabkod, ''::character varying)::text AND COALESCE(r.kod1, ''::character varying)::text = COALESCE(a.kod1, ''::character varying)::text
+   LEFT JOIN nettopri n ON n.lista::text = k.nettolst::text AND n.artnr::text = a.nummer::text
+   left outer join kundgrplank kungl on kungl.kundnr=k.nummer
+   left outer join gruppnetto gn on gn.artnr=a.nummer and gn.grpnr=kungl.grpnr and current_date between gn.frdat and gn.tidat
+   group by a.nummer, ak.klasid, akl.sortorder, lid.lagernr, l.lagernr, l.artnr, k.nummer, r2.rab, r.rab, n.lista, n.artnr
+   ;
  
