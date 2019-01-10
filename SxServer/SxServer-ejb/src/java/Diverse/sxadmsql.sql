@@ -2823,9 +2823,9 @@ declare
 	this_cn integer;
 begin
 	
-	if not exists (select from lagerid where lagerid.lagernr=in_lagernr) then raise exception 'Lagernummer % saknas', in_lagernr; end if;
-	if not exists (select from saljare where forkortning=in_anvandare) then raise exception 'Användare % saknas', in_anvandare; end if;
-	if not exists (select from kund where nummer=in_kundnr) then raise exception 'Kundnummer % saknas', in_kundnr; end if;
+	if not exists (select 1 from lagerid where lagerid.lagernr=in_lagernr) then raise exception 'Lagernummer % saknas', in_lagernr; end if;
+	if not exists (select 1 from saljare where forkortning=in_anvandare) then raise exception 'Användare % saknas', in_anvandare; end if;
+	if not exists (select 1 from kund where nummer=in_kundnr) then raise exception 'Kundnummer % saknas', in_kundnr; end if;
 	
 	select fdordernr.ordernr into this_ordernr from fdordernr;
 	update fdordernr set ordernr = ordernr+1;
@@ -2845,19 +2845,19 @@ begin
 
 
 for this_cn in 1..array_upper(in_artnr,1) loop
-	if not exists (select from artikel where nummer = in_artnr[this_cn]) then raise exception 'Artikel % finns inte', in_artnr[this_cn]; end if;
+	if not exists (select 1 from artikel where nummer = in_artnr[this_cn]) then raise exception 'Artikel % finns inte', in_artnr[this_cn]; end if;
 	if in_antal[this_cn] is null then raise exception 'Antal för artikel % är null', in_artnr[this_cn]; end if;
 	if in_pris[this_cn] is null then raise exception 'Pris för artikel % är null', in_artnr[this_cn]; end if;
 	insert into order2 (ordernr, pos, prisnr, dellev, artnr, namn, levnr, best, rab, lev, pris, summa, konto, netto, enh, stjid)
 		select this_ordernr, this_cn, 1, 1, nummer, namn, lev, in_antal[this_cn] , coalesce(in_rab[this_cn],0), in_antal[this_cn], in_pris[this_cn], round((in_pris[this_cn]*in_antal[this_cn]*(1-coalesce(in_rab[this_cn],0)/100))::numeric,2) , konto, round((inpris*(1-rab/100)*(1+inp_fraktproc/100)+inp_frakt+inp_miljo)::numeric,2), enhet, 0
 		from artikel where nummer=in_artnr[this_cn];
-	if not exists (select from lager where artnr = in_artnr[this_cn] and lagernr = in_lagernr) then insert into lager (artnr, lagernr, ilager, bestpunkt, maxlager, best, iorder, hindrafilialbest) values (in_artnr[this_cn], in_lagernr, 0,0,0,0,0,0); end if;
+	if not exists (select 1 from lager where artnr = in_artnr[this_cn] and lagernr = in_lagernr) then insert into lager (artnr, lagernr, ilager, bestpunkt, maxlager, best, iorder, hindrafilialbest) values (in_artnr[this_cn], in_lagernr, 0,0,0,0,0,0); end if;
 	update lager set iorder=iorder+in_antal[this_cn] where artnr=in_artnr[this_cn] and lagernr=in_lagernr;
 end loop; 
 
 
 	return this_ordernr;
 end;
-$$ language plpgsql;
+$$ language plpgsql SECURITY DEFINER;
 
  
