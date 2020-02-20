@@ -2860,4 +2860,110 @@ end loop;
 end;
 $$ language plpgsql SECURITY DEFINER;
 
- 
+
+
+
+
+
+
+
+
+
+
+
+ CREATE VIEW KUNDNETTO AS
+ SELECT 
+    K.NUMMER AS KUNDNR,
+    a.nummer AS ARTNR,
+    round(LEAST(
+        CASE
+            WHEN a.kamppris > 0::double precision AND 'now'::text::date >= a.kampfrdat AND 'now'::text::date <= a.kamptidat AND (((k.elkund * 1 + k.vvskund * 2 + k.vakund * 4 + k.golvkund * 8 + k.fastighetskund * 16) & COALESCE(a.kampkundartgrp::integer, 0)) > 0 OR a.kampkundartgrp = 0) AND (((k.installator * 1 + k.butik * 2 + k.industri * 4 + k.oem * 8 + k.grossist * 16) & COALESCE(a.kampkundgrp::integer, 0)) > 0 OR a.kampkundgrp = 0) THEN a.kamppris
+            ELSE a.utpris
+        END::double precision, a.utpris * (1::double precision - GREATEST(
+        CASE
+            WHEN upper(a.rabkod::text) = 'NTO'::text THEN 0::real
+            ELSE k.basrab
+        END,
+        CASE
+            WHEN upper(a.rabkod::text) = 'NTO'::text THEN 0::real
+            ELSE r2.rab
+        END, r.rab) / 100::double precision),
+        CASE
+            WHEN n.pris > 0::double precision THEN n.pris
+            ELSE a.utpris
+        END::double precision)::numeric, 2) AS kundnetto_bas,
+        
+    round(
+        CASE
+            WHEN a.staf_antal1 > 0::double precision THEN LEAST(
+            CASE
+                WHEN a.kampprisstaf1 > 0::double precision AND 'now'::text::date >= a.kampfrdat AND 'now'::text::date <= a.kamptidat AND (((k.elkund * 1 + k.vvskund * 2 + k.vakund * 4 + k.golvkund * 8 + k.fastighetskund * 16) & COALESCE(a.kampkundartgrp::integer, 0)) > 0 OR a.kampkundartgrp = 0) AND (((k.installator * 1 + k.butik * 2 + k.industri * 4 + k.oem * 8 + k.grossist * 16) & COALESCE(a.kampkundgrp::integer, 0)) > 0 OR a.kampkundgrp = 0) THEN LEAST(
+                CASE
+                    WHEN a.kampprisstaf1 <> 0::double precision THEN a.kampprisstaf1
+                    ELSE a.utpris
+                END,
+                CASE
+                    WHEN a.kamppris <> 0::double precision THEN a.kamppris
+                    ELSE a.utpris
+                END)
+                ELSE a.utpris
+            END::double precision, LEAST(a.staf_pris1, a.utpris) * (1::double precision - GREATEST(
+            CASE
+                WHEN upper(a.rabkod::text) = 'NTO'::text THEN 0::real
+                ELSE k.basrab
+            END,
+            CASE
+                WHEN upper(a.rabkod::text) = 'NTO'::text THEN 0::real
+                ELSE r2.rab
+            END, r.rab) / 100::double precision),
+            CASE
+                WHEN n.pris > 0::double precision THEN n.pris
+                ELSE a.utpris
+            END::double precision)
+            ELSE 0::double precision
+        END::numeric, 2) AS kundnetto_staf1,
+
+        
+    round(
+        CASE
+            WHEN a.staf_antal2 > 0::double precision THEN LEAST(
+            CASE
+                WHEN a.kampprisstaf2 > 0::double precision AND 'now'::text::date >= a.kampfrdat AND 'now'::text::date <= a.kamptidat AND (((k.elkund * 1 + k.vvskund * 2 + k.vakund * 4 + k.golvkund * 8 + k.fastighetskund * 16) & COALESCE(a.kampkundartgrp::integer, 0)) > 0 OR a.kampkundartgrp = 0) AND (((k.installator * 1 + k.butik * 2 + k.industri * 4 + k.oem * 8 + k.grossist * 16) & COALESCE(a.kampkundgrp::integer, 0)) > 0 OR a.kampkundgrp = 0) THEN LEAST(
+                CASE
+                    WHEN a.kampprisstaf2 <> 0::double precision THEN a.kampprisstaf2
+                    ELSE a.utpris
+                END,
+                CASE
+                    WHEN a.kampprisstaf1 <> 0::double precision THEN a.kampprisstaf1
+                    ELSE a.utpris
+                END,
+                CASE
+                    WHEN a.kamppris <> 0::double precision THEN a.kamppris
+                    ELSE a.utpris
+                END)
+                ELSE a.utpris
+            END::double precision, LEAST(a.staf_pris2,
+            CASE
+                WHEN a.kamppris <> 0::double precision THEN a.kamppris
+                ELSE a.kampprisstaf1
+            END, a.utpris) * (1::double precision - GREATEST(
+            CASE
+                WHEN upper(a.rabkod::text) = 'NTO'::text THEN 0::real
+                ELSE k.basrab
+            END,
+            CASE
+                WHEN upper(a.rabkod::text) = 'NTO'::text THEN 0::real
+                ELSE r2.rab
+            END, r.rab) / 100::double precision),
+            CASE
+                WHEN n.pris > 0::double precision THEN n.pris
+                ELSE a.utpris
+            END::double precision)
+            ELSE 0::double precision
+        END::numeric, 2) AS kundnetto_staf2
+        
+     FROM artikel a 
+     LEFT JOIN kund k ON 1 = 1
+     LEFT JOIN kunrab r2 ON r2.kundnr::text = k.nummer::text AND COALESCE(r2.rabkod, ''::character varying)::text = COALESCE(a.rabkod, ''::character varying)::text AND COALESCE(r2.kod1, ''::character varying)::text = ''::text
+     LEFT JOIN kunrab r ON r.kundnr::text = k.nummer::text AND COALESCE(r.rabkod, ''::character varying)::text = COALESCE(a.rabkod, ''::character varying)::text AND COALESCE(r.kod1, ''::character varying)::text = COALESCE(a.kod1, ''::character varying)::text
+     LEFT JOIN nettopri n ON n.lista::text = k.nettolst::text AND n.artnr::text = a.nummer::text;
