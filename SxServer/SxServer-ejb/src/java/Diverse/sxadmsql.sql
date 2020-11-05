@@ -2973,3 +2973,4 @@ $$ language plpgsql SECURITY DEFINER;
 
 
 alter table inlev1 add column status varchar default 'Sparad';
+alter table order2 add column hindrarestorder boolean ;
