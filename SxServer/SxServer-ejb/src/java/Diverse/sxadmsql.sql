@@ -2974,3 +2974,29 @@ $$ language plpgsql SECURITY DEFINER;
 
 alter table inlev1 add column status varchar default 'Sparad';
 alter table order2 add column hindrarestorder boolean ;
+
+
+
+-- Ändringar 2020-12-17 för att tillfälligt kunna förändra best.punkt och maxlager med hjälp av order på speciellt kundnr 'YY001'
+alter table lager rename to lager_data;
+create view lager as 
+select l.artnr, l.lagernr, l.ilager, l.bestpunkt  + coalesce(o.b,0) as bestpunkt, l.maxlager + coalesce(o.b,0) as maxlager, l.best, l.iorder, l.lagerplats, l.hindrafilialbest  
+from lager_data  l
+left outer join (select o1.lagernr, o2.artnr, sum(o2.best) as b from order1 o1 join order2 o2 on o1.ordernr=o2.ordernr  where kundnr='YY001' group by o1.lagernr , o2.artnr) o on o.artnr=l.artnr and l.lagernr=o.lagernr
+;
+
+create or replace rule lager_udpate_rule as on update to lager do instead 
+update lager_data set artnr=new.artnr, lagernr=new.lagernr, ilager=new.ilager, 
+	bestpunkt= case when bestpunkt + (new.bestpunkt-old.bestpunkt) > 0 then bestpunkt + (new.bestpunkt-old.bestpunkt) else 0 end, 
+	maxlager= case when maxlager + (new.maxlager-old.maxlager) > 0 then maxlager + (new.maxlager-old.maxlager) else 0 end, 
+	best=new.best, iorder=new.iorder, lagerplats=new.lagerplats, hindrafilialbest=new.hindrafilialbest
+	where artnr=old.artnr and lagernr=old.lagernr;
+
+create or replace rule lager_insert_rule as on insert to lager do instead 
+insert into lager_data (artnr, lagernr, ilager, bestpunkt, maxlager, best, iorder, lagerplats, hindrafilialbest  )
+values (new.artnr, new.lagernr, new.ilager, new.bestpunkt, new.maxlager, new.best, new.iorder, new.lagerplats, new.hindrafilialbest);
+	
+create or replace rule lager_delete_rule as on delete to lager do instead 
+delete from lager_data where lagernr=old.lagernr and artnr=old.artnr;
+
+------------------------
