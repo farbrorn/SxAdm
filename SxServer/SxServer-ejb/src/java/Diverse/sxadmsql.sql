@@ -2979,11 +2979,33 @@ alter table order2 add column hindrarestorder boolean ;
 
 -- Ändringar 2020-12-17 för att tillfälligt kunna förändra best.punkt och maxlager med hjälp av offert på speciellt kundnr 'ZBOKA'
 alter table lager rename to lager_data;
-create or replace view lager as 
-select l.artnr, l.lagernr, l.ilager, l.bestpunkt  + coalesce(o.b,0) as bestpunkt, l.maxlager + coalesce(o.b,0) as maxlager, l.best, l.iorder, l.lagerplats, l.hindrafilialbest  
-from lager_data  l
-left outer join (select o1.lagernr, o2.artnr, sum(o2.best) as b from offert1 o1 join offert2 o2 on o1.offertnr=o2.offertnr  where kundnr='ZBOKA' and least(o1.datum + 365, coalesce(o1.levdat, o1.datum+30)) > current_date group by o1.lagernr , o2.artnr) o on o.artnr=l.artnr and l.lagernr=o.lagernr
-;
+CREATE OR REPLACE VIEW lager AS 
+ SELECT l.artnr,
+    l.lagernr,
+    l.ilager,
+    greatest(0,(round((l.bestpunkt * (1::numeric + COALESCE(o.p, 0::numeric))::double precision)::numeric, 2)::double precision + COALESCE(o.b, 0::real))::real) AS bestpunkt,
+    greatest(0,(round((l.maxlager * (1::numeric + COALESCE(o.p, 0::numeric))::double precision)::numeric, 2)::double precision + COALESCE(o.b, 0::real))::real) AS maxlager,
+    l.best,
+    l.iorder,
+    l.lagerplats,
+    l.hindrafilialbest
+   FROM lager_data l
+     LEFT JOIN ( SELECT o1.lagernr,
+            o2.artnr,
+            sum(
+                CASE
+                    WHEN o2.best >= '-0.99'::numeric::double precision AND o2.best <= 0.99::double precision THEN 0::real
+                    ELSE o2.best
+                END) AS b,
+            sum(
+                CASE
+                    WHEN o2.best >= '-0.99'::numeric::double precision AND o2.best <= 0.99::double precision THEN o2.best
+                    ELSE 0.0::real
+                END::numeric) AS p
+           FROM offert1 o1
+             JOIN offert2 o2 ON o1.offertnr = o2.offertnr
+          WHERE o1.kundnr::text = 'ZBOKA'::text AND LEAST(o1.datum + 365, COALESCE(o1.levdat, o1.datum + 30)) > 'now'::text::date
+          GROUP BY o1.lagernr, o2.artnr) o ON o.artnr::text = l.artnr::text AND l.lagernr = o.lagernr;
 
 create or replace rule lager_udpate_rule as on update to lager do instead 
 update lager_data set artnr=new.artnr, lagernr=new.lagernr, ilager=new.ilager, 
