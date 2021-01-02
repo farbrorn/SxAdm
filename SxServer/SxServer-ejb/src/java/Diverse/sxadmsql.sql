@@ -3021,4 +3021,7 @@ values (new.artnr, new.lagernr, new.ilager, new.bestpunkt, new.maxlager, new.bes
 create or replace rule lager_delete_rule as on delete to lager do instead 
 delete from lager_data where lagernr=old.lagernr and artnr=old.artnr;
 
+alter table ORDERHAND drop CONSTRAINT ORDERHAND_PKEY;
+ALTER TABLE orderhAND add column ORDERHANDID SERIAL primary key;
+
 ------------------------
